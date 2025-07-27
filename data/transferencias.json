@@ -1,16 +1,14 @@
 {
-    "TR9183": {
-        "jugador_id": "JG5427",
-        "jugador_nombre": "ANDRES",
-        "equipo_origen_id": "EQ9484",
-        "equipo_origen_nombre": "CALI",
-        "equipo_destino_id": "EQ3026",
-        "equipo_destino_nombre": "AMERICA",
+    "1": {
+        "jugador_id": "145",
+        "jugador_nombre": "JULIAN",
+        "equipo_origen_id": "3",
+        "equipo_origen_nombre": "BARCELONA",
+        "equipo_destino_id": "2",
+        "equipo_destino_nombre": "ONCE",
         "tipo": "Transferencia definitiva",
-        "fecha": "06/02/2025",
-        "monto": 2000.0,
-        "dorsal_anterior": 99,
-        "dorsal_nuevo": 99,
-        "fecha_registro": "27/07/2025 14:34:43"
+        "fecha": "06-05-2025",
+        "dorsal_anterior": 25,
+        "dorsal_nuevo": 25
     }
 }

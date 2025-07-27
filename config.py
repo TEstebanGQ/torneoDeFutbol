@@ -1,10 +1,8 @@
 import os
 
-# Configuración de rutas de archivos
+
 DATA_DIR = "data"
 DB_FILE = os.path.join(DATA_DIR, "database.json")
-
-# Rutas específicas para cada entidad
 EQUIPOS_FILE = os.path.join(DATA_DIR, "equipos.json")
 JUGADORES_FILE = os.path.join(DATA_DIR, "jugadores.json")
 LIGAS_FILE = os.path.join(DATA_DIR, "ligas.json")
@@ -13,7 +11,7 @@ TRANSFERENCIAS_FILE = os.path.join(DATA_DIR, "transferencias.json")
 DIRIGENTES_FILE = os.path.join(DATA_DIR, "dirigentes.json")
 PARTIDOS_FILE = os.path.join(DATA_DIR, "partidos.json")
 
-# Estructura inicial de la base de datos
+# Base de datos
 INITIAL_DB_STRUCTURE = {
     "equipos": {},
     "jugadores": {},
@@ -24,7 +22,6 @@ INITIAL_DB_STRUCTURE = {
     "partidos": {}
 }
 
-# Configuraciones generales
 MAX_JUGADORES_POR_EQUIPO = 25
 MIN_JUGADORES_POR_EQUIPO = 11
 MAX_EQUIPOS_POR_LIGA = 20
@@ -48,7 +45,6 @@ POSICIONES_VALIDAS = [
     "Extremo Izquierdo",
     "Delantero Centro"
 ]
-
 # Tipos de transferencia
 TIPOS_TRANSFERENCIA = [
     "Transferencia definitiva",

@@ -1,13 +1,13 @@
 {
-    "TR3815": {
+    "1": {
         "nombre": "COPA AMERICA",
-        "pais": "COLOMBIA",
-        "fecha_inicial": "06/07/2025",
-        "fecha_final": "20/12/2025",
+        "pais_organizador": "ARGENTINA",
+        "fecha_inicial": "06-02-2024",
+        "fecha_final": "05-02-2024",
         "equipos_ids": [
-            "EQ9484"
+            "1",
+            "2"
         ],
-        "fecha_registro": "27/07/2025 14:37:16",
         "activo": true
     }
 }

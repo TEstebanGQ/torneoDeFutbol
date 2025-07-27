@@ -74,17 +74,25 @@ def initializeJson(file_path: str = None, initialStructure: Dict = None) -> None
                 currentData[key] = value
         writeJson(currentData, file_path)
 
-def generateId(prefix: str, existing_ids: List[str] = None) -> str:
-    """Genera un ID único con prefijo"""
-    import random
+def generateId(existing_ids: List[str] = None) -> str:
+    """Genera un ID numérico ascendente"""
     if existing_ids is None:
         existing_ids = []
     
-    while True:
-        random_num = random.randint(1000, 9999)
-        new_id = f"{prefix}{random_num}"
-        if new_id not in existing_ids:
-            return new_id
+    # Extraer números de los IDs existentes y encontrar el máximo
+    numeros_existentes = []
+    for id_str in existing_ids:
+        try:
+            # Extraer solo números del ID
+            numero = int(''.join(filter(str.isdigit, str(id_str))))
+            numeros_existentes.append(numero)
+        except ValueError:
+            continue
+    
+    if numeros_existentes:
+        return str(max(numeros_existentes) + 1)
+    else:
+        return "1"
 
 # Funciones específicas para cada entidad
 def obtenerEquipos() -> Dict:

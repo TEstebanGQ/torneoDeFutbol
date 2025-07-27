@@ -6,6 +6,7 @@ import controllers.transferencias as transferenciass
 import controllers.ligas as ligass
 import controllers.torneos as torneoss
 import controllers.estadisticas as estadisticass
+import controllers.partidos as partidoss
 from utils.screenControllers import limpiar_pantalla
 import utils.corefiles as cf
 from config import *
@@ -102,6 +103,7 @@ def mostrar_resumen_sistema():
     ligas = cf.obtenerLigas()
     torneos = cf.obtenerTorneos()
     transferencias = cf.obtenerTransferencias()
+    partidos = cf.readJson(PARTIDOS_FILE)
     
     equipos_activos = len([e for e in equipos.values() if e.get("activo", True)])
     jugadores_activos = len([j for j in jugadores.values() if j.get("activo", True)])
@@ -114,6 +116,7 @@ def mostrar_resumen_sistema():
     print(f"   🏆 Ligas activas: {ligas_activas}")
     print(f"   🎯 Torneos activos: {torneos_activos}")
     print(f"   🔄 Transferencias realizadas: {len(transferencias)}")
+    print(f"   ⚽ Partidos registrados: {len(partidos)}")
 
 if __name__ == '__main__':
     # Inicializar sistema al arrancar
@@ -147,6 +150,7 @@ if __name__ == '__main__':
                 equiposs.subMenuEquipos()
             case 1:  # Gestionar Jugadores
                 jugadoress.subMenuJugadores()
+            
             case 2:  # Transferencias
                 transferenciass.subMenuTransferencias()
             case 3:  # Gestionar Ligas
@@ -160,8 +164,8 @@ if __name__ == '__main__':
                 print("🚧 Módulo de Dirigentes en desarrollo...")
                 input("Presione Enter para continuar...")
             case 7:  # Gestionar Partidos
-                print("Módulo de Partidos en desarrollo...")
-                input("Presione Enter para continuar...")
+                partidoss.subMenuPartidos()
+                input("\nPresione Enter para continuar...")
             case 8:  # Salir
                 limpiar_pantalla()
                 print("=" * 60)

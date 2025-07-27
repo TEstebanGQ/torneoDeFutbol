@@ -2,7 +2,6 @@ import os
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
 import utils.corefiles as cf
 from config import JUGADORES_FILE, EQUIPOS_FILE, POSICIONES_VALIDAS
-from datetime import datetime
 
 def obtener_nombre_validado():
     while True:
@@ -53,13 +52,17 @@ def obtener_posicion_validada():
 
 def obtener_fecha_nacimiento():
     while True:
-        fecha_str = input("Ingrese la fecha de nacimiento (DD/MM/YYYY): ").strip()
+        fecha_str = input("Ingrese la fecha de nacimiento (DD-MM-AAAA): ").strip()
+        if not validar_formato_fecha(fecha_str):
+            print("Error: Formato de fecha no válido. Use DD-MM-AAAA.")
+            continue
+        
+        # Calcular edad básica (sin validación compleja)
         try:
-            fecha_obj = datetime.strptime(fecha_str, "%d/%m/%Y")
-            
-            # Calcular edad
-            hoy = datetime.now()
-            edad = hoy.year - fecha_obj.year - ((hoy.month, hoy.day) < (fecha_obj.month, fecha_obj.day))
+            partes = fecha_str.split('-')
+            año_nac = int(partes[2])
+            año_actual = 2025  # Año actual fijo
+            edad = año_actual - año_nac
             
             if edad < 16:
                 print("Error: El jugador debe tener al menos 16 años.")
@@ -70,15 +73,53 @@ def obtener_fecha_nacimiento():
                 
             return fecha_str, edad
         except ValueError:
-            print("Error: Formato de fecha no válido. Use DD/MM/YYYY.")
+            print("Error: Formato de fecha no válido. Use DD-MM-AAAA.")
 
-def obtener_nacionalidad():
+def obtener_id_jugador():
+    """Obtiene el ID numérico del jugador ingresado por el usuario"""
+    jugadores = cf.obtenerJugadores()
+    
     while True:
-        nacionalidad = input("Ingrese la nacionalidad: ").strip().upper()
-        if nacionalidad and all(c.isalpha() or c.isspace() for c in nacionalidad):
-            return nacionalidad
-        else:
-            print("Error: La nacionalidad solo puede contener letras y espacios.")
+        try:
+            id_jugador = input("Ingrese el ID del jugador (número): ").strip()
+            
+            # Verificar que sea un número
+            int(id_jugador)
+            
+            # Verificar que no exista ya
+            if id_jugador in jugadores:
+                print(f"Error: Ya existe un jugador con ID {id_jugador}")
+                continue
+                
+            return id_jugador
+        except ValueError:
+            print("Error: El ID debe ser un número válido.")
+
+def validar_formato_fecha(fecha):
+    """Valida que la fecha tenga formato DD-MM-AAAA"""
+    try:
+        partes = fecha.split('-')
+        if len(partes) != 3:
+            return False
+        
+        dia, mes, año = partes
+        if len(dia) != 2 or len(mes) != 2 or len(año) != 4:
+            return False
+        
+        dia_int = int(dia)
+        mes_int = int(mes)
+        año_int = int(año)
+        
+        if not (1 <= dia_int <= 31):
+            return False
+        if not (1 <= mes_int <= 12):
+            return False
+        if not (1900 <= año_int <= 2100):
+            return False
+        
+        return True
+    except ValueError:
+        return False
 
 def subMenuJugadores():
     while True:
@@ -86,9 +127,7 @@ def subMenuJugadores():
         print("--- Submenú de Gestión de Jugadores ---")
         print("1. Registrar un nuevo jugador")
         print("2. Listar todos los jugadores")
-        print("3. Buscar jugador por equipo")
-        print("4. Buscar jugador por ID")
-        print("5. Volver al menú principal")
+        print("3. Volver al menú principal")
         print("-------------------------------------")
         
         opcion = input("Seleccione una opción: ")
@@ -98,10 +137,6 @@ def subMenuJugadores():
         elif opcion == '2':
             listarJugadores()
         elif opcion == '3':
-            buscarJugadoresPorEquipo()
-        elif opcion == '4':
-            buscarJugadorPorId()
-        elif opcion == '5':
             break
         else:
             print("Opción no válida. Por favor, intente de nuevo.")
@@ -120,12 +155,11 @@ def crearJugador():
     jugadores = cf.obtenerJugadores()
 
     while True:
-        # Generar ID único
-        nuevo_id = cf.generateId("JG", list(jugadores.keys()))
+        # El usuario ingresa el ID directamente
+        nuevo_id = obtener_id_jugador()
         
         nombre = obtener_nombre_validado()
         fecha_nacimiento, edad = obtener_fecha_nacimiento()
-        nacionalidad = obtener_nacionalidad()
         posicion = obtener_posicion_validada()
 
         # Selección de equipo
@@ -156,8 +190,6 @@ def crearJugador():
             "equipo_id": equipo_id_seleccionado,
             "fecha_nacimiento": fecha_nacimiento,
             "edad": edad,
-            "nacionalidad": nacionalidad,
-            "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "activo": True,
             "historial_equipos": [equipo_id_seleccionado]
         }
@@ -200,115 +232,12 @@ def listarJugadores():
                 print(f"  ID: {jugador_id}")
                 print(f"  Nombre: {jugador['nombre']}")
                 print(f"  Edad: {jugador.get('edad', 'N/A')} años")
-                print(f"  Nacionalidad: {jugador.get('nacionalidad', 'N/A')}")
                 print(f"  Dorsal: {jugador['dorsal']} | Posición: {jugador['posicion']}")
                 print(f"  Equipo: {equipo_nombre} (ID: {jugador['equipo_id']})")
-                print(f"  Registrado: {jugador.get('fecha_registro', 'N/A')}")
+                print(f"  Nacimiento: {jugador.get('fecha_nacimiento', 'N/A')}")
                 print("-" * 40)
     
     print("\nPresione Enter para continuar...")    
-    pausar_pantalla()
-
-def buscarJugadoresPorEquipo():
-    limpiar_pantalla()
-    print("--- Buscar Jugadores por Equipo ---")
-    
-    equipos = cf.obtenerEquipos()
-    
-    if not equipos:
-        print("No hay equipos registrados.")
-        pausar_pantalla()
-        return
-    
-    print("Equipos disponibles:")
-    for equipo_id, equipo in equipos.items():
-        if equipo.get("activo", True):
-            print(f"ID: {equipo_id} - {equipo['nombre']} ({equipo['pais']})")
-    
-    equipo_id = input("\nIngrese el ID del equipo: ").strip()
-    
-    if equipo_id not in equipos:
-        print("Equipo no encontrado.")
-        pausar_pantalla()
-        return
-    
-    jugadores = cf.obtenerJugadores()
-    jugadores_equipo = {jid: j for jid, j in jugadores.items() 
-                       if j.get("equipo_id") == equipo_id and j.get("activo", True)}
-    
-    equipo_nombre = equipos[equipo_id]['nombre']
-    
-    print(f"\n--- Jugadores de {equipo_nombre} ---")
-    
-    if not jugadores_equipo:
-        print("Este equipo no tiene jugadores registrados.")
-    else:
-        print(f"Total de jugadores: {len(jugadores_equipo)}\n")
-        
-        # Agrupar por posición
-        jugadores_por_posicion = {}
-        for jugador in jugadores_equipo.values():
-            posicion = jugador['posicion']
-            if posicion not in jugadores_por_posicion:
-                jugadores_por_posicion[posicion] = []
-            jugadores_por_posicion[posicion].append(jugador)
-        
-        for posicion, lista_jugadores in jugadores_por_posicion.items():
-            print(f"{posicion}:")
-            for jugador in lista_jugadores:
-                print(f"  - #{jugador['dorsal']} {jugador['nombre']} ({jugador.get('edad', 'N/A')} años)")
-            print()
-    
-    pausar_pantalla()
-
-def buscarJugadorPorId():
-    limpiar_pantalla()
-    print("--- Buscar Jugador por ID ---")
-    
-    jugadores = cf.obtenerJugadores()
-    
-    if not jugadores:
-        print("No hay jugadores registrados.")
-        pausar_pantalla()
-        return
-    
-    jugador_id = input("Ingrese el ID del jugador: ").strip()
-    
-    if jugador_id not in jugadores:
-        print("Jugador no encontrado.")
-        pausar_pantalla()
-        return
-    
-    jugador = jugadores[jugador_id]
-    
-    if not jugador.get("activo", True):
-        print("El jugador encontrado está inactivo.")
-        pausar_pantalla()
-        return
-    
-    equipos = cf.obtenerEquipos()
-    equipo_nombre = "Equipo no encontrado"
-    if jugador['equipo_id'] in equipos:
-        equipo_nombre = equipos[jugador['equipo_id']]['nombre']
-    
-    print(f"\n--- Información del Jugador ---")
-    print(f"ID: {jugador_id}")
-    print(f"Nombre: {jugador['nombre']}")
-    print(f"Fecha de nacimiento: {jugador.get('fecha_nacimiento', 'N/A')}")
-    print(f"Edad: {jugador.get('edad', 'N/A')} años")
-    print(f"Nacionalidad: {jugador.get('nacionalidad', 'N/A')}")
-    print(f"Posición: {jugador['posicion']}")
-    print(f"Dorsal: {jugador['dorsal']}")
-    print(f"Equipo actual: {equipo_nombre}")
-    print(f"Registrado: {jugador.get('fecha_registro', 'N/A')}")
-    
-    # Mostrar historial de equipos si existe
-    if 'historial_equipos' in jugador and len(jugador['historial_equipos']) > 1:
-        print(f"\nHistorial de equipos:")
-        for eq_id in jugador['historial_equipos']:
-            if eq_id in equipos:
-                print(f"  - {equipos[eq_id]['nombre']}")
-    
     pausar_pantalla()
 
 def obtenerJugadorPorId(jugador_id: str):

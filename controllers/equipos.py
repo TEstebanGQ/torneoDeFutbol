@@ -2,7 +2,6 @@ import utils.screenControllers as screen
 from utils.screenControllers import pausar_pantalla as pausar
 import utils.corefiles as cf
 from config import EQUIPOS_FILE
-from datetime import datetime
 
 def subMenuEquipos():
     while True:
@@ -10,8 +9,7 @@ def subMenuEquipos():
         print("--- Submenú de Gestión de Equipos ---")
         print("1. Registrar un nuevo equipo")
         print("2. Listar todos los equipos")
-        print("3. Buscar equipo por ID")
-        print("4. Volver al menú principal")
+        print("3. Volver al menú principal")
         print("-------------------------------------")
         
         opcion = input("Seleccione una opción: ")
@@ -21,8 +19,6 @@ def subMenuEquipos():
         elif opcion == '2':
             listarEquipos()
         elif opcion == '3':
-            buscarEquipoPorId()
-        elif opcion == '4':
             break
         else:
             print("Opción no válida. Por favor, intente de nuevo.")
@@ -35,33 +31,32 @@ def crearEquipo():
     equipos = cf.obtenerEquipos()
     
     while True:
-        # Generar ID único
-        nuevo_id = cf.generateId("EQ", list(equipos.keys()))
+        # Generar ID único numérico ascendente
+        nuevo_id = cf.generateId(list(equipos.keys()))
 
         nombre = input("Ingrese el nombre del equipo: ").strip().upper()
         if not nombre:
             print("Error: El nombre del equipo no puede estar vacío.")
             continue
-
-        # Verificar si ya existe un equipo con ese nombre
         nombres_existentes = [eq["nombre"].upper() for eq in equipos.values()]
         if nombre in nombres_existentes:
             print(f"Error: El equipo '{nombre}' ya se encuentra registrado.")
             pausar()
             continue
 
-        fecha_fundacion = input("Ingrese la fecha de fundación (DD/MM/YYYY): ").strip()
+        fecha_fundacion = input("Ingrese la fecha de fundación (DD-MM-AAAA): ").strip()
+        if not validar_formato_fecha(fecha_fundacion):
+            print("Error: Formato de fecha inválido. Use DD-MM-AAAA")
+            continue
+
         pais = input("Ingrese el país de origen del equipo: ").strip().upper()
         ciudad = input("Ingrese la ciudad del equipo: ").strip().upper()
-        estadio = input("Ingrese el nombre del estadio: ").strip().upper()
 
         nuevo_equipo = {
             "nombre": nombre,
             "pais": pais,
             "fecha_fundacion": fecha_fundacion,
             "ciudad": ciudad,
-            "estadio": estadio,
-            "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "activo": True
         }
 
@@ -97,44 +92,41 @@ def listarEquipos():
                 print(f"  Nombre: {equipo['nombre']}")
                 print(f"  País: {equipo['pais']}")
                 print(f"  Ciudad: {equipo['ciudad']}")
-                print(f"  Estadio: {equipo['estadio']}")
                 print(f"  Fundación: {equipo['fecha_fundacion']}")
-                print(f"  Registrado: {equipo['fecha_registro']}")
+                # Mostrar liga si está asignada
+                liga_id = equipo.get('liga_id')
+                if liga_id:
+                    print(f"  Liga ID: {liga_id}")
                 print("-" * 30)
     
     print("Presione Enter para continuar...")
     pausar()
 
-def buscarEquipoPorId():
-    screen.limpiar_pantalla()
-    print("--- Buscar Equipo por ID ---")
-    
-    equipos = cf.obtenerEquipos()
-    
-    if not equipos:
-        print("No hay equipos registrados.")
-        pausar()
-        return
-    
-    equipo_id = input("Ingrese el ID del equipo a buscar: ").strip()
-    
-    if equipo_id in equipos:
-        equipo = equipos[equipo_id]
-        if equipo.get("activo", True):
-            print(f"\n--- Información del Equipo ---")
-            print(f"ID: {equipo_id}")
-            print(f"Nombre: {equipo['nombre']}")
-            print(f"País: {equipo['pais']}")
-            print(f"Ciudad: {equipo['ciudad']}")
-            print(f"Estadio: {equipo['estadio']}")
-            print(f"Fundación: {equipo['fecha_fundacion']}")
-            print(f"Registrado: {equipo['fecha_registro']}")
-        else:
-            print("El equipo encontrado está inactivo.")
-    else:
-        print("No se encontró un equipo con ese ID.")
-    
-    pausar()
+def validar_formato_fecha(fecha):
+    """Valida que la fecha tenga formato DD-MM-AAAA"""
+    try:
+        partes = fecha.split('-')
+        if len(partes) != 3:
+            return False
+        
+        dia, mes, año = partes
+        if len(dia) != 2 or len(mes) != 2 or len(año) != 4:
+            return False
+        
+        dia_int = int(dia)
+        mes_int = int(mes)
+        año_int = int(año)
+        
+        if not (1 <= dia_int <= 31):
+            return False
+        if not (1 <= mes_int <= 12):
+            return False
+        if not (1900 <= año_int <= 2100):
+            return False
+        
+        return True
+    except ValueError:
+        return False
 
 def obtenerEquipoPorId(equipo_id: str):
     """Función auxiliar para obtener un equipo por ID"""

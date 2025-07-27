@@ -1,20 +1,25 @@
 {
-    "EQ9484": {
-        "nombre": "CALI",
-        "pais": "COLOMBIA",
-        "fecha_fundacion": "06/12/2000",
-        "ciudad": "PEREIRA",
-        "estadio": "MONTANINI",
-        "fecha_registro": "27/07/2025 14:26:23",
-        "activo": true
-    },
-    "EQ3026": {
+    "1": {
         "nombre": "AMERICA",
         "pais": "COLOMBIA",
-        "fecha_fundacion": "06/05/1923",
-        "ciudad": "SANTANDER",
-        "estadio": "MONTANINI",
-        "fecha_registro": "27/07/2025 14:32:48",
+        "fecha_fundacion": "06-01-2025",
+        "ciudad": "CALI",
+        "activo": true,
+        "liga_id": "1"
+    },
+    "2": {
+        "nombre": "ONCE",
+        "pais": "COLOMBIA",
+        "fecha_fundacion": "21-03-1924",
+        "ciudad": "MANIZALES",
+        "activo": true,
+        "liga_id": "1"
+    },
+    "3": {
+        "nombre": "BARCELONA",
+        "pais": "ESPAÑA",
+        "fecha_fundacion": "05-03-1956",
+        "ciudad": "MADRID",
         "activo": true
     }
 }
