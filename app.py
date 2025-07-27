@@ -3,13 +3,20 @@ import sys
 import controllers.equipos as equiposs
 import controllers.jugadores as jugadoress
 import controllers.transferencias as transferenciass
-from utils.screenControllers import limpiar_pantalla
 import controllers.ligas as ligass
+import controllers.torneos as torneoss
+import controllers.estadisticas as estadisticass
+from utils.screenControllers import limpiar_pantalla
+import utils.corefiles as cf
+from config import *
 
 class AnsiColors:
     RESET = '\033[0m'
     YELLOW = '\033[93m'
     GREEN = '\033[92m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
 
 def _get_key_windows():
     import msvcrt
@@ -49,17 +56,20 @@ def interactive_menu_colored(options):
 
     while True:
         limpiar_pantalla()
-        print("Menú torneo de fútbol")
-        print("Seleccione una opción (use las flechas y Enter):")
-        print("──────────────────────────────────────────────")
+        print("=" * 60)
+        print(f"{AnsiColors.CYAN}🏆 SISTEMA DE GESTIÓN DE TORNEO DE FÚTBOL 🏆{AnsiColors.RESET}")
+        print("=" * 60)
+        print("Seleccione una opción (use las flechas ↑↓ y Enter):")
+        print("-" * 60)
 
         for i, option in enumerate(options):
             if i == current_option:
-                print(f"{AnsiColors.YELLOW}{option}{AnsiColors.RESET}")
+                print(f"{AnsiColors.YELLOW}► {option}{AnsiColors.RESET}")
             else:
-                print(option)
+                print(f"  {option}")
         
-        print("──────────────────────────────────────────────")
+        print("-" * 60)
+        print(f"{AnsiColors.BLUE}💡 Tip: Use las flechas para navegar y Enter para seleccionar{AnsiColors.RESET}")
 
         key = get_key()
 
@@ -70,44 +80,96 @@ def interactive_menu_colored(options):
         elif key == 'enter':
             return current_option
 
+def inicializar_sistema():
+    """Inicializa los archivos de datos necesarios"""
+    print("Inicializando sistema...")
+    
+    # Inicializar archivos individuales
+    cf.initializeJson(EQUIPOS_FILE, {})
+    cf.initializeJson(JUGADORES_FILE, {})
+    cf.initializeJson(LIGAS_FILE, {})
+    cf.initializeJson(TORNEOS_FILE, {})
+    cf.initializeJson(TRANSFERENCIAS_FILE, {})
+    cf.initializeJson(DIRIGENTES_FILE, {})
+    cf.initializeJson(PARTIDOS_FILE, {})
+    
+    print("✅ Sistema inicializado correctamente.")
+
+def mostrar_resumen_sistema():
+    """Muestra un resumen rápido del estado del sistema"""
+    equipos = cf.obtenerEquipos()
+    jugadores = cf.obtenerJugadores()
+    ligas = cf.obtenerLigas()
+    torneos = cf.obtenerTorneos()
+    transferencias = cf.obtenerTransferencias()
+    
+    equipos_activos = len([e for e in equipos.values() if e.get("activo", True)])
+    jugadores_activos = len([j for j in jugadores.values() if j.get("activo", True)])
+    ligas_activas = len([l for l in ligas.values() if l.get("activa", True)])
+    torneos_activos = len([t for t in torneos.values() if t.get("activo", True)])
+    
+    print(f"\n{AnsiColors.GREEN}📊 RESUMEN DEL SISTEMA:{AnsiColors.RESET}")
+    print(f"   🏟️  Equipos registrados: {equipos_activos}")
+    print(f"   👥 Jugadores registrados: {jugadores_activos}")
+    print(f"   🏆 Ligas activas: {ligas_activas}")
+    print(f"   🎯 Torneos activos: {torneos_activos}")
+    print(f"   🔄 Transferencias realizadas: {len(transferencias)}")
+
 if __name__ == '__main__':
+    # Inicializar sistema al arrancar
+    inicializar_sistema()
+    
     menu_items = [
-        '- Gestionar Equipos', 
-        '- Gestionar Jugadores',
-        '- Transferencias de Jugadores',
-        '- Ver Estadisticas',
-        '- Gestionar Ligas',
-        '- Gestionar Torneos',
-        '- Gestionar Dirigentes',
-        '- Gestionar Partidos',
-        '- Salir'
+        '🏟️  Gestionar Equipos', 
+        '👥 Gestionar Jugadores',
+        '🔄 Transferencias de Jugadores',
+        '🏆 Gestionar Ligas',
+        '🎯 Gestionar Torneos',
+        '📊 Ver Estadísticas',
+        '👔 Gestionar Dirigentes',
+        '⚽ Gestionar Partidos',
+        '❌ Salir del Sistema'
     ]
     
     while True:
         selected_index = interactive_menu_colored(menu_items)
         limpiar_pantalla()
+        
+        # Mostrar resumen antes de cada acción
+        mostrar_resumen_sistema()
+        
         selected_text = menu_items[selected_index]
-        print(f"Ha seleccionado: {AnsiColors.GREEN}{selected_text}{AnsiColors.RESET}")
+        print(f"\n{AnsiColors.GREEN}✅ Ha seleccionado: {selected_text}{AnsiColors.RESET}")
+        print("-" * 60)
 
         match selected_index:
-            case 0:
+            case 0:  # Gestionar Equipos
                 equiposs.subMenuEquipos()
-            case 1:
+            case 1:  # Gestionar Jugadores
                 jugadoress.subMenuJugadores()
-            case 2:
+            case 2:  # Transferencias
                 transferenciass.subMenuTransferencias()
-            case 3:
-                pass
-            case 4:
+            case 3:  # Gestionar Ligas
                 ligass.subMenuLigas()
-            case 5:
-                pass
-            case 6:
-                pass
-            case 7:
-                pass
-            case 8:
-                print("¡Hasta luego!")
+            case 4:  # Gestionar Torneos
+                torneoss.subMenuTorneos()
+            case 5:  # Ver Estadísticas
+                estadisticass.mostrar_estadisticas()
+                input("\nPresione Enter para continuar...")
+            case 6:  # Gestionar Dirigentes
+                print("🚧 Módulo de Dirigentes en desarrollo...")
+                input("Presione Enter para continuar...")
+            case 7:  # Gestionar Partidos
+                print("Módulo de Partidos en desarrollo...")
+                input("Presione Enter para continuar...")
+            case 8:  # Salir
+                limpiar_pantalla()
+                print("=" * 60)
+                print(f"{AnsiColors.GREEN}¡Gracias por usar el Sistema de Gestión de Torneo!{AnsiColors.RESET}")
+                print("=" * 60)
+                print("👋 ¡Hasta luego!")
+                print("=" * 60)
                 break
             case _:
-                print("Opción no válida.")
+                print(f"{AnsiColors.RED}Opción no válida.{AnsiColors.RESET}")
+                input("Presione Enter para continuar...")

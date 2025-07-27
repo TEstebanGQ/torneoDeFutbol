@@ -2,30 +2,20 @@ import os
 import json
 import datetime
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
+import utils.corefiles as cf
+from config import LIGAS_FILE, EQUIPOS_FILE
+import controllers.equipos as equipos_controller
 
-RUTA_LIGAS_JSON = os.path.join("data", "ligas.json")
-RUTA_EQUIPOS_JSON = os.path.join("data", "equipos.json")
-
-def cargar_datos(ruta_archivo):
-    os.makedirs("data", exist_ok=True)
-    try:
-        with open(ruta_archivo, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-def guardar_datos(datos, ruta_archivo):
-    with open(ruta_archivo, 'w') as f:
-        json.dump(datos, f, indent=4)
-
-def obtener_nombre_liga_validado(lista_ligas):
+def obtener_nombre_liga_validado(ligas_existentes):
     while True:
-        nombre = input("Ingrese el nombre de la liga: ").strip()
+        nombre = input("Ingrese el nombre de la liga: ").strip().upper()
         if not nombre:
             print("Error: El nombre de la liga no puede estar vacío.")
             continue
         
-        if nombre.lower() in [liga['nombre'].lower() for liga in lista_ligas]:
+        # Verificar si ya existe una liga con ese nombre
+        nombres_existentes = [liga["nombre"].upper() for liga in ligas_existentes.values()]
+        if nombre in nombres_existentes:
             print(f"Error: La liga '{nombre}' ya se encuentra registrada.")
             continue
             
@@ -33,7 +23,7 @@ def obtener_nombre_liga_validado(lista_ligas):
 
 def obtener_pais_validado():
     while True:
-        pais = input("Ingrese el país de la liga: ").strip()
+        pais = input("Ingrese el país de la liga: ").strip().upper()
         if not pais:
             print("Error: El país no puede estar vacío.")
             continue
@@ -47,71 +37,65 @@ def obtener_fecha_valida(prompt, fecha_referencia=None):
     while True:
         fecha_str = input(prompt).strip()
         try:
-            fecha_obj = datetime.datetime.strptime(fecha_str, "%Y-%m-%d")
+            fecha_obj = datetime.datetime.strptime(fecha_str, "%d/%m/%Y")
             if fecha_referencia and fecha_obj <= fecha_referencia:
-                print(f"Error: La fecha final debe ser posterior a la fecha inicial ({fecha_referencia.strftime('%Y-%m-%d')}).")
+                print(f"Error: La fecha final debe ser posterior a la fecha inicial ({fecha_referencia.strftime('%d/%m/%Y')}).")
                 continue
             return fecha_str, fecha_obj
         except ValueError:
-            print("Error: Formato de fecha no válido. Por favor, use YYYY-MM-DD.")
+            print("Error: Formato de fecha no válido. Por favor, use DD/MM/YYYY.")
 
 def agregar_equipos_a_liga(nueva_liga_id, pais_de_la_liga):
+    """Función corregida para agregar equipos de un país específico a la liga"""
     equipos_seleccionados_ids = []
     
     while True:
         limpiar_pantalla()
-        equipos_todos = cargar_datos(RUTA_EQUIPOS_JSON)
         
-        equipos_disponibles = [
-            e for e in equipos_todos 
-            if not e.get("liga_id") and e.get("pais", "").lower() == pais_de_la_liga.lower()
-        ]
+        # Obtener equipos disponibles del país especificado
+        equipos_del_pais = equipos_controller.obtenerEquiposPorPais(pais_de_la_liga)
+        
+        # Filtrar equipos que no tengan liga asignada
+        equipos_disponibles = {}
+        for id_equipo, datos_equipo in equipos_del_pais.items():
+            # Verificar si el equipo ya está en alguna liga
+            ligas_existentes = cf.obtenerLigas()
+            equipo_ya_asignado = False
+            
+            for liga in ligas_existentes.values():
+                if id_equipo in liga.get("equipos_ids", []):
+                    equipo_ya_asignado = True
+                    break
+            
+            if not equipo_ya_asignado:
+                equipos_disponibles[id_equipo] = datos_equipo
 
         print(f"--- Agregar Equipos de '{pais_de_la_liga}' a la Liga ---")
+        
         if not equipos_disponibles:
-            print("No hay equipos disponibles de este país para agregar.")
+            print(f"No hay equipos disponibles de {pais_de_la_liga} para agregar a la liga.")
+            print("Todos los equipos de este país ya están asignados a otras ligas.")
             pausar_pantalla()
             break
 
         print("Equipos Disponibles:")
-        for equipo in equipos_disponibles:
-            print(f"ID: {equipo['id']} - Nombre: {equipo['nombre']}")
+        for id_equipo, datos_equipo in equipos_disponibles.items():
+            print(f"ID: {id_equipo} - Nombre: {datos_equipo['nombre']} - Ciudad: {datos_equipo['ciudad']}")
         print("-------------------------------")
 
-        try:
-            equipo_id_str = input("Ingrese el ID del equipo a agregar (o 'fin' para terminar): ").strip()
-            if equipo_id_str.lower() == 'fin':
-                break
-            
-            equipo_id = int(equipo_id_str)
-            equipo_a_agregar = next((e for e in equipos_disponibles if e['id'] == equipo_id), None)
-
-            if equipo_a_agregar:
-                # Verificar si el equipo ya está asignado a otra liga
-                if equipo_a_agregar.get("liga_id"):
-                    print("Error: Este equipo ya está asignado a otra liga.")
-                    pausar_pantalla()
-                    continue
-
-                # Asignar el equipo a la nueva liga
-                for equipo_en_lista in equipos_todos:
-                    if equipo_en_lista['id'] == equipo_id:
-                        equipo_en_lista['liga_id'] = nueva_liga_id
-                        break
-                guardar_datos(equipos_todos, RUTA_EQUIPOS_JSON)
-
-                equipos_seleccionados_ids.append(equipo_id)
-                print(f"¡Equipo '{equipo_a_agregar['nombre']}' agregado a la liga!")
-            else:
-                print("Error: ID de equipo no válido o ya asignado.")
-                pausar_pantalla()
-
-        except ValueError:
-            print("Error: Entrada no válida.")
+        respuesta = input("Ingrese el ID del equipo a agregar (o 'fin' para terminar): ").strip()
+        
+        if respuesta.lower() == 'fin':
+            break
+        
+        if respuesta in equipos_disponibles:
+            equipos_seleccionados_ids.append(respuesta)
+            equipo_agregado = equipos_disponibles[respuesta]
+            print(f"¡Equipo '{equipo_agregado['nombre']}' agregado a la liga!")
             pausar_pantalla()
-
-    return equipos_seleccionados_ids
-
+        else:
+            print("Error: ID de equipo no válido o ya no disponible.")
+            pausar_pantalla()
 
     return equipos_seleccionados_ids
 
@@ -121,7 +105,8 @@ def subMenuLigas():
         print("--- Submenú de Gestión de Ligas ---")
         print("1. Crear una nueva Liga")
         print("2. Listar todas las Ligas")
-        print("3. Volver al Menú Principal")
+        print("3. Ver detalles de una Liga")
+        print("4. Volver al Menú Principal")
         print("-----------------------------------")
         
         opcion = input("Seleccione una opción: ").strip()
@@ -131,6 +116,8 @@ def subMenuLigas():
         elif opcion == "2":
             listarLigas()
         elif opcion == "3":
+            verDetallesLiga()
+        elif opcion == "4":
             break
         else:
             print("Opción no válida. Intente nuevamente.")
@@ -140,56 +127,102 @@ def crearLiga():
     limpiar_pantalla()
     print("--- Crear Nueva Liga ---")
     
-    lista_de_ligas = cargar_datos(RUTA_LIGAS_JSON)
+    ligas_existentes = cf.obtenerLigas()
     
-    if not lista_de_ligas:
-        nuevo_id = 1
-    else:
-        nuevo_id = max(liga.get("id", 0) for liga in lista_de_ligas) + 1
+    # Generar ID único
+    nuevo_id = cf.generateId("LG", list(ligas_existentes.keys()))
 
-    nombre = obtener_nombre_liga_validado(lista_de_ligas)
+    nombre = obtener_nombre_liga_validado(ligas_existentes)
     pais = obtener_pais_validado()
-    fecha_inicial_str, fecha_inicial_obj = obtener_fecha_valida("Ingrese la fecha de inicio (YYYY-MM-DD): ")
-    fecha_final_str, _ = obtener_fecha_valida("Ingrese la fecha de finalización (YYYY-MM-DD): ", fecha_referencia=fecha_inicial_obj)
+    fecha_inicial_str, fecha_inicial_obj = obtener_fecha_valida("Ingrese la fecha de inicio (DD/MM/YYYY): ")
+    fecha_final_str, _ = obtener_fecha_valida("Ingrese la fecha de finalización (DD/MM/YYYY): ", fecha_referencia=fecha_inicial_obj)
 
     ids_equipos_en_liga = agregar_equipos_a_liga(nuevo_id, pais)
 
+    if not ids_equipos_en_liga:
+        print("No se puede crear una liga sin equipos.")
+        pausar_pantalla()
+        return
+
     nueva_liga = {
-        "id": nuevo_id,
         "nombre": nombre,
         "pais": pais,
         "fecha_inicial": fecha_inicial_str,
         "fecha_final": fecha_final_str,
-        "equipos_ids": ids_equipos_en_liga
+        "equipos_ids": ids_equipos_en_liga,
+        "fecha_registro": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "activa": True
     }
     
-    lista_de_ligas.append(nueva_liga)
-    guardar_datos(lista_de_ligas, RUTA_LIGAS_JSON)
+    ligas_existentes[nuevo_id] = nueva_liga
+    cf.guardarLigas(ligas_existentes)
     
-    print(f"\n¡Liga '{nombre}' creada exitosamente!")
+    print(f"\n¡Liga '{nombre}' creada exitosamente con {len(ids_equipos_en_liga)} equipos!")
     pausar_pantalla()
 
 def listarLigas():
     limpiar_pantalla()
     print("--- Listado de Ligas Registradas ---")
     
-    lista_de_ligas = cargar_datos(RUTA_LIGAS_JSON)
-    equipos_todos = cargar_datos(RUTA_EQUIPOS_JSON)
-    mapa_equipos = {e['id']: e['nombre'] for e in equipos_todos}
+    ligas = cf.obtenerLigas()
+    equipos = cf.obtenerEquipos()
 
-    if not lista_de_ligas:
+    if not ligas:
         print("No hay ligas registradas.")
     else:
-        for liga in lista_de_ligas:
-            print(f"\nID: {liga['id']} | Nombre: {liga['nombre']} | País: {liga['pais']}")
-            print(f"  Duración: {liga['fecha_inicial']} a {liga['fecha_final']}")
-            print("  Equipos Participantes:")
-            if not liga.get('equipos_ids'):
-                print("    - Ningún equipo asignado.")
-            else:
-                for equipo_id in liga['equipos_ids']:
-                    nombre_equipo = mapa_equipos.get(equipo_id, "Equipo Desconocido")
-                    print(f"    - {nombre_equipo} (ID: {equipo_id})")
-            print("-" * 40)
+        for liga_id, liga in ligas.items():
+            if liga.get("activa", True):
+                print(f"\nID: {liga_id}")
+                print(f"Nombre: {liga['nombre']}")
+                print(f"País: {liga['pais']}")
+                print(f"Duración: {liga['fecha_inicial']} a {liga['fecha_final']}")
+                print(f"Equipos participantes: {len(liga.get('equipos_ids', []))}")
+                print(f"Registrada: {liga.get('fecha_registro', 'N/A')}")
+                print("-" * 50)
+    
     print("Presione Enter para continuar...")
+    pausar_pantalla()
+
+def verDetallesLiga():
+    limpiar_pantalla()
+    print("--- Ver Detalles de Liga ---")
+    
+    ligas = cf.obtenerLigas()
+    
+    if not ligas:
+        print("No hay ligas registradas.")
+        pausar_pantalla()
+        return
+    
+    # Mostrar ligas disponibles
+    print("Ligas disponibles:")
+    for liga_id, liga in ligas.items():
+        if liga.get("activa", True):
+            print(f"ID: {liga_id} - {liga['nombre']} ({liga['pais']})")
+    
+    liga_id = input("\nIngrese el ID de la liga: ").strip()
+    
+    if liga_id not in ligas:
+        print("Liga no encontrada.")
+        pausar_pantalla()
+        return
+    
+    liga = ligas[liga_id]
+    equipos = cf.obtenerEquipos()
+    
+    print(f"\n--- Detalles de {liga['nombre']} ---")
+    print(f"ID: {liga_id}")
+    print(f"País: {liga['pais']}")
+    print(f"Fecha inicio: {liga['fecha_inicial']}")
+    print(f"Fecha fin: {liga['fecha_final']}")
+    print(f"Registrada: {liga.get('fecha_registro', 'N/A')}")
+    print("\nEquipos participantes:")
+    
+    for equipo_id in liga.get('equipos_ids', []):
+        if equipo_id in equipos:
+            equipo = equipos[equipo_id]
+            print(f"  - {equipo['nombre']} ({equipo['ciudad']})")
+        else:
+            print(f"  - Equipo {equipo_id} (No encontrado)")
+    
     pausar_pantalla()

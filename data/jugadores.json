@@ -1,16 +1,31 @@
 {
-    "JG2617": {
+    "JG5427": {
         "nombre": "ANDRES",
-        "dorsal": 33,
+        "dorsal": 99,
         "posicion": "Portero",
-        "equipo_id": "EQ5794",
-        "fecha_nacimiento": "23/02/2000",
-        "edad": 25,
-        "nacionalidad": "VENO",
-        "fecha_registro": "25/07/2025 06:01:27",
+        "equipo_id": "EQ3026",
+        "fecha_nacimiento": "06/02/1988",
+        "edad": 37,
+        "nacionalidad": "COLOMBIANA",
+        "fecha_registro": "27/07/2025 14:29:03",
         "activo": true,
         "historial_equipos": [
-            "EQ5794"
+            "EQ9484",
+            "EQ3026"
+        ]
+    },
+    "JG9123": {
+        "nombre": "TOMAS",
+        "dorsal": 32,
+        "posicion": "Líbero",
+        "equipo_id": "EQ9484",
+        "fecha_nacimiento": "06/04/2008",
+        "edad": 17,
+        "nacionalidad": "COLOMBIANA",
+        "fecha_registro": "27/07/2025 14:31:20",
+        "activo": true,
+        "historial_equipos": [
+            "EQ9484"
         ]
     }
 }

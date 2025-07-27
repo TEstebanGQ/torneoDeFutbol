@@ -1,1 +1,14 @@
-{}
+{
+    "LG6723": {
+        "nombre": "BETPLAY",
+        "pais": "COLOMBIA",
+        "fecha_inicial": "03/05/2025",
+        "fecha_final": "21/12/2025",
+        "equipos_ids": [
+            "EQ9484",
+            "EQ3026"
+        ],
+        "fecha_registro": "27/07/2025 14:39:05",
+        "activa": true
+    }
+}

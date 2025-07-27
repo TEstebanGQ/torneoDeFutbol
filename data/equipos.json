@@ -1,11 +1,20 @@
 {
-    "EQ5794": {
+    "EQ9484": {
+        "nombre": "CALI",
+        "pais": "COLOMBIA",
+        "fecha_fundacion": "06/12/2000",
+        "ciudad": "PEREIRA",
+        "estadio": "MONTANINI",
+        "fecha_registro": "27/07/2025 14:26:23",
+        "activo": true
+    },
+    "EQ3026": {
         "nombre": "AMERICA",
         "pais": "COLOMBIA",
-        "fecha_fundacion": "25/07/2025",
-        "ciudad": "BUCARAMANGA",
-        "estadio": "VILLACONCHA",
-        "fecha_registro": "25/07/2025 06:00:20",
+        "fecha_fundacion": "06/05/1923",
+        "ciudad": "SANTANDER",
+        "estadio": "MONTANINI",
+        "fecha_registro": "27/07/2025 14:32:48",
         "activo": true
     }
 }
