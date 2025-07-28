@@ -1,13 +1,9 @@
-import os
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
 import utils.corefiles as cf
 from config import PARTIDOS_FILE
-import controllers.ligas as ligas_controller
-import controllers.torneos as torneos_controller
-import controllers.equipos as equipos_controller
+
 
 def validar_formato_fecha(fecha):
-    """Valida que la fecha tenga formato DD-MM-AAAA"""
     try:
         partes = fecha.split('-')
         if len(partes) != 3:
@@ -47,8 +43,8 @@ def subMenuPartidos():
         print("1. Registrar partidos de ligas")
         print("2. Registrar partidos de torneos")
         print("3. Listar partidos")
-        print("4. Salir al menú principal")
-        print("--------------------------------------")
+        print("4. Volver al menú principal")
+        print('-' * 40)
         
         opcion = input("Seleccione una opción: ")
 
@@ -75,21 +71,26 @@ def registrar_partido_liga():
         print("No hay ligas registradas.")
         pausar_pantalla()
         return
-    
-    # Mostrar ligas disponibles
     print("Ligas disponibles:")
+    ligas_activas = {}
     for liga_id, liga in ligas.items():
         if liga.get("activa", True):
+            ligas_activas[liga_id] = liga
             print(f"ID: {liga_id} - {liga['nombre']} ({liga['pais']})")
     
-    liga_id = input("\nIngrese el ID de la liga: ").strip()
-    
-    if liga_id not in ligas:
-        print("Liga no encontrada.")
+    if not ligas_activas:
+        print("No hay ligas activas disponibles.")
         pausar_pantalla()
         return
     
-    liga = ligas[liga_id]
+    liga_id = input("\nIngrese el ID de la liga: ").strip()
+    
+    if liga_id not in ligas_activas:
+        print("Liga no encontrada o no está activa.")
+        pausar_pantalla()
+        return
+    
+    liga = ligas_activas[liga_id]
     equipos_liga = liga.get('equipos_ids', [])
     
     if len(equipos_liga) < 2:
@@ -98,23 +99,28 @@ def registrar_partido_liga():
         return
     
     print(f"\n--- Equipos de la Liga {liga['nombre']} ---")
+    equipos_validos = {}
     for equipo_id in equipos_liga:
-        if equipo_id in equipos:
+        if equipo_id in equipos and equipos[equipo_id].get("activo", True):
             equipo = equipos[equipo_id]
+            equipos_validos[equipo_id] = equipo
             print(f"ID: {equipo_id} - {equipo['nombre']}")
     
-    # Seleccionar equipo local
+    if len(equipos_validos) < 2:
+        print("No hay suficientes equipos activos en esta liga para registrar un partido.")
+        pausar_pantalla()
+        return
+    
     while True:
         equipo_local_id = input("\nIngrese el ID del equipo local: ").strip()
-        if equipo_local_id in equipos_liga and equipo_local_id in equipos:
+        if equipo_local_id in equipos_validos:
             break
         else:
             print("Error: ID de equipo no válido o no pertenece a esta liga.")
-    
-    # Seleccionar equipo visitante
+
     while True:
         equipo_visitante_id = input("Ingrese el ID del equipo visitante: ").strip()
-        if equipo_visitante_id in equipos_liga and equipo_visitante_id in equipos:
+        if equipo_visitante_id in equipos_validos:
             if equipo_visitante_id != equipo_local_id:
                 break
             else:
@@ -123,8 +129,7 @@ def registrar_partido_liga():
             print("Error: ID de equipo no válido o no pertenece a esta liga.")
     
     fecha_partido = obtener_fecha_valida("Ingrese la fecha del partido (DD-MM-AAAA): ")
-    
-    # Obtener resultados
+
     try:
         goles_local = int(input("Ingrese goles del equipo local: "))
         goles_visitante = int(input("Ingrese goles del equipo visitante: "))
@@ -136,8 +141,7 @@ def registrar_partido_liga():
         print("Error: Debe ingresar números válidos para los goles.")
         pausar_pantalla()
         return
-    
-    # Generar ID único numérico ascendente
+
     partidos = cf.readJson(PARTIDOS_FILE)
     nuevo_id = cf.generateId(list(partidos.keys()))
     
@@ -146,9 +150,9 @@ def registrar_partido_liga():
         "liga_id": liga_id,
         "liga_nombre": liga['nombre'],
         "equipo_local_id": equipo_local_id,
-        "equipo_local_nombre": equipos[equipo_local_id]['nombre'],
+        "equipo_local_nombre": equipos_validos[equipo_local_id]['nombre'],
         "equipo_visitante_id": equipo_visitante_id,
-        "equipo_visitante_nombre": equipos[equipo_visitante_id]['nombre'],
+        "equipo_visitante_nombre": equipos_validos[equipo_visitante_id]['nombre'],
         "fecha": fecha_partido,
         "goles_local": goles_local,
         "goles_visitante": goles_visitante,
@@ -159,7 +163,7 @@ def registrar_partido_liga():
     cf.writeJson(partidos, PARTIDOS_FILE)
     
     print(f"\n¡Partido registrado exitosamente!")
-    print(f"{equipos[equipo_local_id]['nombre']} {goles_local} - {goles_visitante} {equipos[equipo_visitante_id]['nombre']}")
+    print(f"{equipos_validos[equipo_local_id]['nombre']} {goles_local} - {goles_visitante} {equipos_validos[equipo_visitante_id]['nombre']}")
     print(f"Resultado: {nuevo_partido['resultado']}")
     pausar_pantalla()
 
@@ -174,21 +178,27 @@ def registrar_partido_torneo():
         print("No hay torneos registrados.")
         pausar_pantalla()
         return
-    
-    # Mostrar torneos disponibles
+
     print("Torneos disponibles:")
+    torneos_activos = {}
     for torneo_id, torneo in torneos.items():
         if torneo.get("activo", True):
+            torneos_activos[torneo_id] = torneo
             print(f"ID: {torneo_id} - {torneo['nombre']} (Organizador: {torneo.get('pais_organizador', torneo.get('pais', 'N/A'))})")
     
-    torneo_id = input("\nIngrese el ID del torneo: ").strip()
-    
-    if torneo_id not in torneos:
-        print("Torneo no encontrado.")
+    if not torneos_activos:
+        print("No hay torneos activos disponibles.")
         pausar_pantalla()
         return
     
-    torneo = torneos[torneo_id]
+    torneo_id = input("Ingrese el ID del torneo: ").strip()
+    
+    if torneo_id not in torneos_activos:
+        print("Torneo no encontrado o no está activo.")
+        pausar_pantalla()
+        return
+    
+    torneo = torneos_activos[torneo_id]
     equipos_torneo = torneo.get('equipos_ids', [])
     
     if len(equipos_torneo) < 2:
@@ -196,24 +206,29 @@ def registrar_partido_torneo():
         pausar_pantalla()
         return
     
-    print(f"\n--- Equipos del Torneo {torneo['nombre']} ---")
+    print(f"--- Equipos del Torneo {torneo['nombre']} ---")
+    equipos_validos = {}
     for equipo_id in equipos_torneo:
-        if equipo_id in equipos:
+        if equipo_id in equipos and equipos[equipo_id].get("activo", True):
             equipo = equipos[equipo_id]
+            equipos_validos[equipo_id] = equipo
             print(f"ID: {equipo_id} - {equipo['nombre']} ({equipo['pais']})")
     
-    # Seleccionar equipo local
+    if len(equipos_validos) < 2:
+        print("No hay suficientes equipos activos en este torneo para registrar un partido.")
+        pausar_pantalla()
+        return
+
     while True:
-        equipo_local_id = input("\nIngrese el ID del equipo local: ").strip()
-        if equipo_local_id in equipos_torneo and equipo_local_id in equipos:
+        equipo_local_id = input("Ingrese el ID del equipo local: ").strip()
+        if equipo_local_id in equipos_validos:
             break
         else:
             print("Error: ID de equipo no válido o no pertenece a este torneo.")
-    
-    # Seleccionar equipo visitante
+
     while True:
         equipo_visitante_id = input("Ingrese el ID del equipo visitante: ").strip()
-        if equipo_visitante_id in equipos_torneo and equipo_visitante_id in equipos:
+        if equipo_visitante_id in equipos_validos:
             if equipo_visitante_id != equipo_local_id:
                 break
             else:
@@ -223,7 +238,6 @@ def registrar_partido_torneo():
     
     fecha_partido = obtener_fecha_valida("Ingrese la fecha del partido (DD-MM-AAAA): ")
     
-    # Obtener resultados
     try:
         goles_local = int(input("Ingrese goles del equipo local: "))
         goles_visitante = int(input("Ingrese goles del equipo visitante: "))
@@ -236,7 +250,6 @@ def registrar_partido_torneo():
         pausar_pantalla()
         return
     
-    # Generar ID único numérico ascendente
     partidos = cf.readJson(PARTIDOS_FILE)
     nuevo_id = cf.generateId(list(partidos.keys()))
     
@@ -245,9 +258,9 @@ def registrar_partido_torneo():
         "torneo_id": torneo_id,
         "torneo_nombre": torneo['nombre'],
         "equipo_local_id": equipo_local_id,
-        "equipo_local_nombre": equipos[equipo_local_id]['nombre'],
+        "equipo_local_nombre": equipos_validos[equipo_local_id]['nombre'],
         "equipo_visitante_id": equipo_visitante_id,
-        "equipo_visitante_nombre": equipos[equipo_visitante_id]['nombre'],
+        "equipo_visitante_nombre": equipos_validos[equipo_visitante_id]['nombre'],
         "fecha": fecha_partido,
         "goles_local": goles_local,
         "goles_visitante": goles_visitante,
@@ -257,8 +270,8 @@ def registrar_partido_torneo():
     partidos[nuevo_id] = nuevo_partido
     cf.writeJson(partidos, PARTIDOS_FILE)
     
-    print(f"\n¡Partido registrado exitosamente!")
-    print(f"{equipos[equipo_local_id]['nombre']} {goles_local} - {goles_visitante} {equipos[equipo_visitante_id]['nombre']}")
+    print(f"¡Partido registrado exitosamente!")
+    print(f"{equipos_validos[equipo_local_id]['nombre']} {goles_local} - {goles_visitante} {equipos_validos[equipo_visitante_id]['nombre']}")
     print(f"Resultado: {nuevo_partido['resultado']}")
     pausar_pantalla()
 

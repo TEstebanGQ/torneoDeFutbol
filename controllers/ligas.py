@@ -1,5 +1,4 @@
-import os
-import json
+from datetime import datetime
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
 import utils.corefiles as cf
 from config import LIGAS_FILE, EQUIPOS_FILE
@@ -11,13 +10,10 @@ def obtener_nombre_liga_validado(ligas_existentes):
         if not nombre:
             print("Error: El nombre de la liga no puede estar vacío.")
             continue
-        
-        # Verificar si ya existe una liga con ese nombre
         nombres_existentes = [liga["nombre"].upper() for liga in ligas_existentes.values()]
         if nombre in nombres_existentes:
             print(f"Error: La liga '{nombre}' ya se encuentra registrada.")
             continue
-            
         return nombre
 
 def obtener_pais_validado():
@@ -26,22 +22,34 @@ def obtener_pais_validado():
         if not pais:
             print("Error: El país no puede estar vacío.")
             continue
-
         if all(c.isalpha() or c.isspace() for c in pais):
             return pais
         else:
             print("Error: El país solo puede contener letras y espacios.")
 
-def obtener_fecha_valida(prompt):
+def convertir_fecha_a_datetime(fecha_str):
+    try:
+        return datetime.strptime(fecha_str, "%d-%m-%Y")
+    except ValueError:
+        return None
+
+def obtener_fecha_valida(prompt, fecha_referencia=None, debe_ser_mayor=False):
     while True:
         fecha_str = input(prompt).strip()
-        if validar_formato_fecha(fecha_str):
-            return fecha_str
-        else:
+        if not validar_formato_fecha(fecha_str):
             print("Error: Formato de fecha no válido. Por favor, use DD-MM-AAAA.")
+            continue
+        
+        if fecha_referencia and debe_ser_mayor:
+            fecha_actual = convertir_fecha_a_datetime(fecha_str)
+            fecha_ref = convertir_fecha_a_datetime(fecha_referencia)
+            if fecha_actual and fecha_ref:
+                if fecha_actual <= fecha_ref:
+                    print(f"Error: La fecha final debe ser mayor a la fecha inicial ({fecha_referencia}).")
+                    continue    
+        return fecha_str
 
 def validar_formato_fecha(fecha):
-    """Valida que la fecha tenga formato DD-MM-AAAA"""
     try:
         partes = fecha.split('-')
         if len(partes) != 3:
@@ -67,23 +75,17 @@ def validar_formato_fecha(fecha):
         return False
 
 def agregar_equipos_a_liga(nueva_liga_id, pais_de_la_liga):
-    """Función corregida para agregar equipos de un país específico a la liga"""
     equipos_seleccionados_ids = []
     
     while True:
         limpiar_pantalla()
-        
-        # Obtener equipos disponibles del país especificado
         equipos_del_pais = equipos_controller.obtenerEquiposPorPais(pais_de_la_liga)
-        
-        # Filtrar equipos que no tengan liga asignada
         equipos_disponibles = {}
         for id_equipo, datos_equipo in equipos_del_pais.items():
-            # Verificar si el equipo ya está en alguna liga
             if 'liga_id' not in datos_equipo:
                 equipos_disponibles[id_equipo] = datos_equipo
 
-        print(f"--- Agregar Equipos de '{pais_de_la_liga}' a la Liga ---")
+        print(f"    Agregar Equipos de '{pais_de_la_liga}' a la Liga    ")
         
         if not equipos_disponibles:
             print(f"No hay equipos disponibles de {pais_de_la_liga} para agregar a la liga.")
@@ -94,7 +96,7 @@ def agregar_equipos_a_liga(nueva_liga_id, pais_de_la_liga):
         print("Equipos Disponibles:")
         for id_equipo, datos_equipo in equipos_disponibles.items():
             print(f"ID: {id_equipo} - Nombre: {datos_equipo['nombre']} - Ciudad: {datos_equipo['ciudad']}")
-        print("-------------------------------")
+        print("-" * 50)
 
         respuesta = input("Ingrese el ID del equipo a agregar (o 'fin' para terminar): ").strip()
         
@@ -135,17 +137,17 @@ def subMenuLigas():
 
 def crearLiga():
     limpiar_pantalla()
-    print("--- Crear Nueva Liga ---")
+    print("    Crear Nueva Liga    ")
     
     ligas_existentes = cf.obtenerLigas()
-    
-    # Generar ID único numérico ascendente
     nuevo_id = cf.generateId(list(ligas_existentes.keys()))
-
     nombre = obtener_nombre_liga_validado(ligas_existentes)
     pais = obtener_pais_validado()
     fecha_inicial_str = obtener_fecha_valida("Ingrese la fecha de inicio (DD-MM-AAAA): ")
-    fecha_final_str = obtener_fecha_valida("Ingrese la fecha de finalización (DD-MM-AAAA): ")
+    fecha_final_str = obtener_fecha_valida(
+        "Ingrese la fecha de finalización (DD-MM-AAAA): ", 
+        fecha_inicial_str, 
+        debe_ser_mayor=True )
 
     ids_equipos_en_liga = agregar_equipos_a_liga(nuevo_id, pais)
 
@@ -166,20 +168,19 @@ def crearLiga():
     ligas_existentes[nuevo_id] = nueva_liga
     cf.guardarLigas(ligas_existentes)
     
-    # IMPORTANTE: Actualizar equipos con el ID de la liga en el JSON de equipos
     equipos = cf.obtenerEquipos()
     for equipo_id in ids_equipos_en_liga:
         if equipo_id in equipos:
             equipos[equipo_id]['liga_id'] = nuevo_id
     cf.guardarEquipos(equipos)
     
-    print(f"\n¡Liga '{nombre}' (ID: {nuevo_id}) creada exitosamente con {len(ids_equipos_en_liga)} equipos!")
+    print(f"¡Liga '{nombre}' (ID: {nuevo_id}) creada exitosamente con {len(ids_equipos_en_liga)} equipos!")
     print(f"Los equipos han sido actualizados con el ID de liga: {nuevo_id}")
     pausar_pantalla()
 
 def listarLigas():
     limpiar_pantalla()
-    print("--- Listado de Ligas Registradas ---")
+    print("    Listado de Ligas Registradas    ")
     
     ligas = cf.obtenerLigas()
     equipos = cf.obtenerEquipos()
@@ -194,8 +195,6 @@ def listarLigas():
                 print(f"País: {liga['pais']}")
                 print(f"Duración: {liga['fecha_inicial']} a {liga['fecha_final']}")
                 print(f"Equipos participantes: {len(liga.get('equipos_ids', []))}")
-                
-                # Mostrar equipos de la liga
                 equipos_liga = liga.get('equipos_ids', [])
                 if equipos_liga:
                     print("Equipos:")
@@ -212,23 +211,19 @@ def listarLigas():
     pausar_pantalla()
 
 def obtenerLigaPorId(liga_id: str):
-    """Función auxiliar para obtener una liga por ID"""
     ligas = cf.obtenerLigas()
     return ligas.get(liga_id)
 
 def obtenerLigasPorPais(pais: str):
-    """Función auxiliar para obtener ligas por país"""
     ligas = cf.obtenerLigas()
     return {id_lg: lg for id_lg, lg in ligas.items() 
             if lg.get("pais", "").upper() == pais.upper() and lg.get("activa", True)}
 
 def obtenerTodasLigas():
-    """Función auxiliar para obtener todas las ligas activas"""
     ligas = cf.obtenerLigas()
     return {id_lg: lg for id_lg, lg in ligas.items() if lg.get("activa", True)}
 
 def obtenerEquiposDeLiga(liga_id: str):
-    """Función auxiliar para obtener equipos de una liga específica"""
     liga = obtenerLigaPorId(liga_id)
     if not liga:
         return {}
@@ -239,9 +234,7 @@ def obtenerEquiposDeLiga(liga_id: str):
     return {eq_id: equipos[eq_id] for eq_id in equipos_ids if eq_id in equipos}
 
 def verificarEquipoEnLiga(equipo_id: str, liga_id: str):
-    """Verifica si un equipo pertenece a una liga específica"""
     liga = obtenerLigaPorId(liga_id)
     if not liga:
         return False
-    
     return equipo_id in liga.get('equipos_ids', [])

@@ -1,1 +1,10 @@
-{}
+{
+    "1": {
+        "nombre": "ANDRES GALLO",
+        "cargo": "Asesor jurídico",
+        "tipo_competicion": "Torneo",
+        "competicion_id": "1",
+        "competicion_nombre": "COPA AMERICA",
+        "activo": true
+    }
+}

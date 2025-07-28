@@ -1,10 +1,7 @@
-import os
-import json
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
 import utils.corefiles as cf
 from config import TRANSFERENCIAS_FILE, TIPOS_TRANSFERENCIA
 import controllers.jugadores as jugadores_controller
-import controllers.equipos as equipos_controller
 
 def obtener_fecha_valida():
     while True:
@@ -15,7 +12,6 @@ def obtener_fecha_valida():
             print("Error: Formato de fecha no válido. Por favor, use DD-MM-AAAA.")
 
 def validar_formato_fecha(fecha):
-    """Valida que la fecha tenga formato DD-MM-AAAA"""
     try:
         partes = fecha.split('-')
         if len(partes) != 3:
@@ -41,7 +37,6 @@ def validar_formato_fecha(fecha):
         return False
 
 def mostrar_jugadores_disponibles():
-    """Muestra panel con jugadores disponibles para transferir"""
     jugadores = cf.obtenerJugadores()
     equipos = cf.obtenerEquipos()
     
@@ -52,7 +47,7 @@ def mostrar_jugadores_disponibles():
         return
     
     print("=" * 60)
-    print("📋 JUGADORES DISPONIBLES PARA TRANSFERIR")
+    print("  JUGADORES DISPONIBLES PARA TRANSFERIR")
     print("=" * 60)
     
     for jugador_id, jugador in jugadores_activos.items():
@@ -70,7 +65,7 @@ def subMenuTransferencias():
         print("1. Realizar una nueva transferencia")
         print("2. Ver historial de transferencias")
         print("3. Volver al Menú Principal")
-        print("---------------------------------")
+        print("-" * 30)
         
         opcion = input("Seleccione una opción: ")
         
@@ -94,7 +89,6 @@ def transferir_jugador():
         pausar_pantalla()
         return
 
-    # Filtrar solo jugadores activos
     jugadores_activos = {jid: j for jid, j in jugadores.items() if j.get("activo", True)}
 
     while True:
@@ -107,10 +101,10 @@ def transferir_jugador():
             return
         
         try:
-            jugador_id = input("\nIngrese el ID del jugador a transferir: ").strip()
+            jugador_id = input("Ingrese el ID del jugador a transferir: ").strip()
             
             if jugador_id not in jugadores_activos:
-                print("\nError: No se encontró un jugador activo con ese ID. Intente de nuevo.")
+                print("Error: No se encontró un jugador activo con ese ID. Intente de nuevo.")
                 pausar_pantalla()
                 continue
             else:
@@ -130,15 +124,13 @@ def transferir_jugador():
     print(f"Equipo de Origen: {nombre_origen} (ID: {equipo_origen_id})")
     print(f"Posición: {jugador_a_transferir['posicion']} | Dorsal: {jugador_a_transferir['dorsal']}")
 
-    # Mostrar equipos de destino disponibles
     equipos_disponibles = {eid: eq for eid, eq in equipos.items() 
                           if eid != equipo_origen_id and eq.get("activo", True)}
-    
     while True:
-        print("\n--- Equipos de Destino Disponibles ---")
+        print("--- Equipos de Destino Disponibles ---")
         for equipo_id, equipo in equipos_disponibles.items():
             print(f"ID: {equipo_id} - Nombre: {equipo['nombre']} - País: {equipo['pais']} ({equipo['ciudad']})")
-        print("------------------------------------")
+        print("-" * 50)
         
         equipo_destino_id = input("Ingrese el ID del nuevo equipo: ").strip()
         
@@ -151,36 +143,35 @@ def transferir_jugador():
     equipo_destino = equipos_disponibles[equipo_destino_id]
     nombre_destino = equipo_destino['nombre']
 
-    # Selección del tipo de transferencia
+    # Selección del tipo de transferencia (ACTUALIZADO CON TODOS LOS TIPOS)
+    
     tipo_transferencia = ""
     while True:
         limpiar_pantalla()
         print("--- Tipos de Transferencia Disponibles ---")
-        tipos_simplificados = ["Transferencia definitiva", "Cesión o préstamo", "Transferencia libre"]
-        for i, tipo in enumerate(tipos_simplificados, 1):
+        for i, tipo in enumerate(TIPOS_TRANSFERENCIA, 1):
             print(f"{i}. {tipo}")
         print("----------------------------------------")
         try:
-            opcion_tipo = int(input("Seleccione el número del tipo de transferencia: "))
-            if 1 <= opcion_tipo <= len(tipos_simplificados):
-                tipo_transferencia = tipos_simplificados[opcion_tipo - 1]
+            opcion_tipo = int(input(f"Seleccione el número del tipo de transferencia (1-{len(TIPOS_TRANSFERENCIA)}): "))
+            if 1 <= opcion_tipo <= len(TIPOS_TRANSFERENCIA):
+                tipo_transferencia = TIPOS_TRANSFERENCIA[opcion_tipo - 1]
                 break
             else:
-                print("Error: Número de opción no válido. Intente de nuevo.")
+                print(f"Error: Número de opción no válido. Seleccione entre 1 y {len(TIPOS_TRANSFERENCIA)}.")
                 pausar_pantalla()
         except ValueError:
-            print("Error: Debe ingresar un número. Intente de nuevo.")
+            print("Error: Debe ingresar un número válido.")
             pausar_pantalla()
 
     fecha_transferencia = obtener_fecha_valida()
-    
-    # Verificar disponibilidad del dorsal en el nuevo equipo
+  
     jugadores_equipo_destino = jugadores_controller.obtenerJugadoresPorEquipo(equipo_destino_id)
     dorsales_ocupados = [j['dorsal'] for j in jugadores_equipo_destino.values()]
     
     nuevo_dorsal = jugador_a_transferir['dorsal']
     if nuevo_dorsal in dorsales_ocupados:
-        print(f"\nAdvertencia: El dorsal {nuevo_dorsal} ya está ocupado en {nombre_destino}.")
+        print(f"Advertencia: El dorsal {nuevo_dorsal} ya está ocupado en {nombre_destino}.")
         while True:
             try:
                 nuevo_dorsal = int(input("Ingrese un nuevo dorsal (1-99): "))
@@ -191,7 +182,6 @@ def transferir_jugador():
             except ValueError:
                 print("Error: Debe ingresar un número válido.")
 
-    # Generar ID único numérico ascendente
     nuevo_id_transferencia = cf.generateId(list(transferencias.keys()))
     
     nueva_transferencia = {
@@ -210,11 +200,10 @@ def transferir_jugador():
     transferencias[nuevo_id_transferencia] = nueva_transferencia
     cf.guardarTransferencias(transferencias)
 
-    # Actualizar datos del jugador
     jugador_a_transferir['equipo_id'] = equipo_destino_id
     jugador_a_transferir['dorsal'] = nuevo_dorsal
     
-    # Agregar al historial de equipos si no existe
+    
     if 'historial_equipos' not in jugador_a_transferir:
         jugador_a_transferir['historial_equipos'] = [equipo_origen_id]
     
@@ -224,7 +213,7 @@ def transferir_jugador():
     jugadores[jugador_id] = jugador_a_transferir
     cf.guardarJugadores(jugadores)
     
-    print("\n" + "="*60)
+    print("="*60)
     print("¡TRANSFERENCIA COMPLETADA Y REGISTRADA EXITOSAMENTE!")
     print("="*60)
     print(f"Jugador: {jugador_a_transferir['nombre']}")
@@ -259,12 +248,9 @@ def ver_transferencias():
     pausar_pantalla()
 
 def estadisticas_transferencias():
-    """Función auxiliar para obtener estadísticas (usado por el módulo de estadísticas)"""
     transferencias = cf.obtenerTransferencias()
     
     total = len(transferencias)
-    
-    # Estadísticas por tipo
     por_tipo = {}
     for trans in transferencias.values():
         tipo = trans.get('tipo', 'N/A')
@@ -272,15 +258,12 @@ def estadisticas_transferencias():
     
     return {
         'total': total,
-        'monto_total': 0,  # Sin monto según requerimientos
+        'monto_total': 0,  
         'promedio_monto': 0,
         'por_tipo': por_tipo
     }
 
 def obtener_transferencias_por_equipo(equipo_id: str, tipo_participacion: str):
-    """Función auxiliar para obtener transferencias de un equipo
-    tipo_participacion: 'origen' o 'destino'
-    """
     transferencias = cf.obtenerTransferencias()
     
     if tipo_participacion == 'origen':

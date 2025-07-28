@@ -1,14 +1,14 @@
 {
     "1": {
-        "jugador_id": "145",
-        "jugador_nombre": "JULIAN",
-        "equipo_origen_id": "3",
-        "equipo_origen_nombre": "BARCELONA",
-        "equipo_destino_id": "2",
-        "equipo_destino_nombre": "ONCE",
-        "tipo": "Transferencia definitiva",
-        "fecha": "06-05-2025",
-        "dorsal_anterior": 25,
-        "dorsal_nuevo": 25
+        "jugador_id": "123",
+        "jugador_nombre": "ANDRES",
+        "equipo_origen_id": "2",
+        "equipo_origen_nombre": "ONCE CALDAS",
+        "equipo_destino_id": "1",
+        "equipo_destino_nombre": "AMERICA",
+        "tipo": "Cláusula de rescisión",
+        "fecha": "02-05-2024",
+        "dorsal_anterior": 12,
+        "dorsal_nuevo": 12
     }
 }

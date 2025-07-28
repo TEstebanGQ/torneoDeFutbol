@@ -2,24 +2,17 @@
     "1": {
         "nombre": "AMERICA",
         "pais": "COLOMBIA",
-        "fecha_fundacion": "06-01-2025",
+        "fecha_fundacion": "02-03-1988",
         "ciudad": "CALI",
         "activo": true,
         "liga_id": "1"
     },
     "2": {
-        "nombre": "ONCE",
+        "nombre": "ONCE CALDAS",
         "pais": "COLOMBIA",
-        "fecha_fundacion": "21-03-1924",
-        "ciudad": "MANIZALES",
+        "fecha_fundacion": "02-06-1922",
+        "ciudad": "MANIZALEZ",
         "activo": true,
         "liga_id": "1"
-    },
-    "3": {
-        "nombre": "BARCELONA",
-        "pais": "ESPAÑA",
-        "fecha_fundacion": "05-03-1956",
-        "ciudad": "MADRID",
-        "activo": true
     }
 }

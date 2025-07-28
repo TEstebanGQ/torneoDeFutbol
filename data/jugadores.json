@@ -1,27 +1,27 @@
 {
     "123": {
         "nombre": "ANDRES",
-        "dorsal": 1,
-        "posicion": "Líbero",
-        "equipo_id": "3",
-        "fecha_nacimiento": "06-12-2008",
-        "edad": 17,
+        "dorsal": 12,
+        "posicion": "Lateral Derecho",
+        "equipo_id": "1",
+        "fecha_nacimiento": "12-09-2004",
+        "edad": 21,
         "activo": true,
         "historial_equipos": [
-            "3"
+            "2",
+            "1"
         ]
     },
     "145": {
-        "nombre": "JULIAN",
-        "dorsal": 25,
-        "posicion": "Delantero Centro",
-        "equipo_id": "2",
-        "fecha_nacimiento": "06-02-2003",
+        "nombre": "MATEO",
+        "dorsal": 1,
+        "posicion": "Portero",
+        "equipo_id": "1",
+        "fecha_nacimiento": "06-04-2003",
         "edad": 22,
         "activo": true,
         "historial_equipos": [
-            "3",
-            "2"
+            "1"
         ]
     }
 }

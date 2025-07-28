@@ -1,5 +1,4 @@
-import os
-import json
+from datetime import datetime
 from utils.screenControllers import limpiar_pantalla, pausar_pantalla
 import utils.corefiles as cf
 from config import TORNEOS_FILE, EQUIPOS_FILE
@@ -12,7 +11,6 @@ def obtener_nombre_torneo_validado(torneos_existentes):
             print("Error: El nombre del torneo no puede estar vacío.")
             continue
         
-        # Verificar si ya existe un torneo con ese nombre
         nombres_existentes = [torneo["nombre"].upper() for torneo in torneos_existentes.values()]
         if nombre in nombres_existentes:
             print(f"Error: El torneo '{nombre}' ya se encuentra registrado.")
@@ -32,16 +30,31 @@ def obtener_pais_validado():
         else:
             print("Error: El país solo puede contener letras y espacios.")
 
-def obtener_fecha_valida(prompt):
+def convertir_fecha_a_datetime(fecha_str):
+    try:
+        return datetime.strptime(fecha_str, "%d-%m-%Y")
+    except ValueError:
+        return None
+
+def obtener_fecha_valida(prompt, fecha_referencia=None, debe_ser_mayor=False):
     while True:
         fecha_str = input(prompt).strip()
-        if validar_formato_fecha(fecha_str):
-            return fecha_str
-        else:
+        if not validar_formato_fecha(fecha_str):
             print("Error: Formato de fecha no válido. Por favor, use DD-MM-AAAA.")
+            continue
+        
+        if fecha_referencia and debe_ser_mayor:
+            fecha_actual = convertir_fecha_a_datetime(fecha_str)
+            fecha_ref = convertir_fecha_a_datetime(fecha_referencia)
+            
+            if fecha_actual and fecha_ref:
+                if fecha_actual <= fecha_ref:
+                    print(f"Error: La fecha final debe ser mayor a la fecha inicial ({fecha_referencia}).")
+                    continue
+        
+        return fecha_str
 
 def validar_formato_fecha(fecha):
-    """Valida que la fecha tenga formato DD-MM-AAAA"""
     try:
         partes = fecha.split('-')
         if len(partes) != 3:
@@ -67,16 +80,13 @@ def validar_formato_fecha(fecha):
         return False
 
 def agregar_equipos_a_torneo(nuevo_torneo_id):
-    """Función para agregar equipos al torneo (cualquier país)"""
     equipos_seleccionados_ids = []
     
     while True:
         limpiar_pantalla()
         
-        # Obtener todos los equipos disponibles
         todos_equipos = equipos_controller.obtenerTodosEquipos()
-        
-        # Filtrar equipos que no estén ya en este torneo
+
         equipos_disponibles = {}
         for id_equipo, datos_equipo in todos_equipos.items():
             if id_equipo not in equipos_seleccionados_ids:
@@ -92,15 +102,15 @@ def agregar_equipos_a_torneo(nuevo_torneo_id):
         print("Equipos Disponibles:")
         for id_equipo, datos_equipo in equipos_disponibles.items():
             print(f"ID: {id_equipo} - Nombre: {datos_equipo['nombre']} - País: {datos_equipo['pais']} - Ciudad: {datos_equipo['ciudad']}")
-        print("-------------------------------")
+        print("-" * 50)
         
         if equipos_seleccionados_ids:
-            print(f"\nEquipos ya agregados: {len(equipos_seleccionados_ids)}")
+            print(f"Equipos ya agregados: {len(equipos_seleccionados_ids)}")
             print("Equipos seleccionados:")
             for eq_id in equipos_seleccionados_ids:
                 if eq_id in todos_equipos:
                     print(f"  - {todos_equipos[eq_id]['nombre']} ({todos_equipos[eq_id]['pais']})")
-            print("-------------------------------")
+            print("-" * 50)
 
         respuesta = input("Ingrese el ID del equipo a agregar (o 'fin' para terminar): ").strip()
         
@@ -125,7 +135,7 @@ def subMenuTorneos():
         print("1. Crear un nuevo Torneo")
         print("2. Listar todos los Torneos")
         print("3. Volver al Menú Principal")
-        print("-------------------------------------")
+        print("-" * 40)
         
         opcion = input("Seleccione una opción: ").strip()
         
@@ -144,16 +154,16 @@ def crearTorneo():
     print("--- Crear Nuevo Torneo ---")
     
     torneos_existentes = cf.obtenerTorneos()
-    
-    # Generar ID único numérico ascendente
     nuevo_id = cf.generateId(list(torneos_existentes.keys()))
-
     nombre = obtener_nombre_torneo_validado(torneos_existentes)
     pais = obtener_pais_validado()
     fecha_inicial_str = obtener_fecha_valida("Ingrese la fecha de inicio (DD-MM-AAAA): ")
-    fecha_final_str = obtener_fecha_valida("Ingrese la fecha de finalización (DD-MM-AAAA): ")
+    fecha_final_str = obtener_fecha_valida(
+        "Ingrese la fecha de finalización (DD-MM-AAAA): ", 
+        fecha_inicial_str, 
+        debe_ser_mayor=True )
 
-    print("\n--- Agregando Equipos al Torneo ---")
+    print("     Agregando Equipos al Torneo     ")
     print("Nota: En los torneos pueden participar equipos de cualquier país")
     pausar_pantalla()
     
@@ -176,7 +186,7 @@ def crearTorneo():
     torneos_existentes[nuevo_id] = nuevo_torneo
     cf.guardarTorneos(torneos_existentes)
     
-    print(f"\n¡Torneo '{nombre}' creado exitosamente con {len(ids_equipos_en_torneo)} equipos!")
+    print(f"Torneo '{nombre}' creado exitosamente con {len(ids_equipos_en_torneo)} equipos")
     pausar_pantalla()
 
 def listarTorneos():
@@ -191,7 +201,7 @@ def listarTorneos():
     else:
         for torneo_id, torneo in torneos.items():
             if torneo.get("activo", True):
-                print(f"\nID: {torneo_id}")
+                print(f"ID: {torneo_id}")
                 print(f"Nombre: {torneo['nombre']}")
                 print(f"País Organizador: {torneo.get('pais_organizador', torneo.get('pais', 'N/A'))}")
                 print(f"Duración: {torneo['fecha_inicial']} a {torneo['fecha_final']}")
@@ -202,17 +212,14 @@ def listarTorneos():
     pausar_pantalla()
 
 def obtenerTorneoPorId(torneo_id: str):
-    """Función auxiliar para obtener un torneo por ID"""
     torneos = cf.obtenerTorneos()
     return torneos.get(torneo_id)
 
 def obtenerTorneosPorPais(pais: str):
-    """Función auxiliar para obtener torneos por país"""
     torneos = cf.obtenerTorneos()
     return {id_tr: tr for id_tr, tr in torneos.items() 
             if tr.get("pais_organizador", tr.get("pais", "")).upper() == pais.upper() and tr.get("activo", True)}
 
 def obtenerTodosTorneos():
-    """Función auxiliar para obtener todos los torneos activos"""
     torneos = cf.obtenerTorneos()
     return {id_tr: tr for id_tr, tr in torneos.items() if tr.get("activo", True)}

@@ -2,8 +2,8 @@
     "1": {
         "nombre": "COPA AMERICA",
         "pais_organizador": "ARGENTINA",
-        "fecha_inicial": "06-02-2024",
-        "fecha_final": "05-02-2024",
+        "fecha_inicial": "02-06-2024",
+        "fecha_final": "02-06-2025",
         "equipos_ids": [
             "1",
             "2"

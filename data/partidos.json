@@ -1,1 +1,28 @@
-{}
+{
+    "1": {
+        "tipo": "Liga",
+        "liga_id": "1",
+        "liga_nombre": "BETPLAY",
+        "equipo_local_id": "1",
+        "equipo_local_nombre": "AMERICA",
+        "equipo_visitante_id": "2",
+        "equipo_visitante_nombre": "ONCE CALDAS",
+        "fecha": "02-04-2025",
+        "goles_local": 3,
+        "goles_visitante": 2,
+        "resultado": "Victoria Local"
+    },
+    "2": {
+        "tipo": "Torneo",
+        "torneo_id": "1",
+        "torneo_nombre": "COPA AMERICA",
+        "equipo_local_id": "1",
+        "equipo_local_nombre": "AMERICA",
+        "equipo_visitante_id": "2",
+        "equipo_visitante_nombre": "ONCE CALDAS",
+        "fecha": "06-02-2025",
+        "goles_local": 3,
+        "goles_visitante": 4,
+        "resultado": "Victoria Visitante"
+    }
+}

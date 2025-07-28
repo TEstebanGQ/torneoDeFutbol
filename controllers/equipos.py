@@ -26,12 +26,11 @@ def subMenuEquipos():
 
 def crearEquipo():
     screen.limpiar_pantalla()
-    print("--- Registro de Nuevos Equipos ---")
+    print("    Registro de Nuevos Equipos    ")
     
     equipos = cf.obtenerEquipos()
     
     while True:
-        # Generar ID único numérico ascendente
         nuevo_id = cf.generateId(list(equipos.keys()))
 
         nombre = input("Ingrese el nombre del equipo: ").strip().upper()
@@ -75,11 +74,11 @@ def crearEquipo():
             break
         
         screen.limpiar_pantalla()
-        print("--- Registro de Nuevos Equipos ---")
+        print("    Registro de Nuevos Equipos    ")
 
 def listarEquipos():
     screen.limpiar_pantalla()
-    print("--- Lista de Equipos Registrados ---")
+    print("    Lista de Equipos Registrados    ")
 
     equipos = cf.obtenerEquipos()
     
@@ -103,7 +102,6 @@ def listarEquipos():
     pausar()
 
 def validar_formato_fecha(fecha):
-    """Valida que la fecha tenga formato DD-MM-AAAA"""
     try:
         partes = fecha.split('-')
         if len(partes) != 3:
@@ -129,17 +127,14 @@ def validar_formato_fecha(fecha):
         return False
 
 def obtenerEquipoPorId(equipo_id: str):
-    """Función auxiliar para obtener un equipo por ID"""
     equipos = cf.obtenerEquipos()
     return equipos.get(equipo_id)
 
 def obtenerEquiposPorPais(pais: str):
-    """Función auxiliar para obtener equipos por país"""
     equipos = cf.obtenerEquipos()
     return {id_eq: eq for id_eq, eq in equipos.items() 
             if eq.get("pais", "").upper() == pais.upper() and eq.get("activo", True)}
 
 def obtenerTodosEquipos():
-    """Función auxiliar para obtener todos los equipos activos"""
     equipos = cf.obtenerEquipos()
     return {id_eq: eq for id_eq, eq in equipos.items() if eq.get("activo", True)}
