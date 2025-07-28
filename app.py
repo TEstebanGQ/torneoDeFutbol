@@ -1,3 +1,8 @@
+""" 
+Autor: Tomas Esteban Gonzalez Quintero
+fecha: 27/07/2025
+Descripcion: Aqui se impleta un sitema de torneos donde se guardan jugadores equipos, y demas para establecer las ligas y los torneos
+"""
 import controllers.equipos as equiposs
 import controllers.jugadores as jugadoress
 import controllers.transferencias as transferenciass
